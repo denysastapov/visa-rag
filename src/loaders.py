@@ -33,5 +33,5 @@ def load_all_pdfs(folder) -> list[dict]:
 
 if __name__ == "__main__":
     pages = load_all_pdfs("data/raw")
-    print(f"всего страниц: {len(pages)}")
+    print(f"pages: {len(pages)}")
     print(pages[0]["source"], "|", pages[-1]["source"])
