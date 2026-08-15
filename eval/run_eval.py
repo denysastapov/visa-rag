@@ -1,7 +1,7 @@
 import sys
 
 from config import CHUNK_OVERLAP, CHUNK_SIZE, TOP_K
-from eval.questions import ANSWERABLE, MUST_REFUSE, REFUSAL_MARKERS
+from eval.questions import ANSWERABLE, CROSS_LINGUAL, MUST_REFUSE, REFUSAL_MARKERS
 from src.embeddings import embed_query
 from src.generate import answer
 from src.index import load_index, search
@@ -42,6 +42,30 @@ def run_retrieval(chunks, vectors):
     return hits, total
 
 
+def run_cross_lingual(chunks, vectors):
+    print("\nCROSS-LINGUAL  (non-English question, English-only corpus)\n")
+    hits = 0
+
+    for case in CROSS_LINGUAL:
+        results = search(embed_query(case["question"]), chunks, vectors, TOP_K)
+        rank = rank_of_expected(results, case["expect_source"])
+
+        if rank:
+            hits += 1
+            verdict, detail = OK, f"rank {rank}"
+        else:
+            verdict, detail = BAD, "missing"
+
+        print(
+            f"  {verdict}  {case['id']:<6} [{case['lang']}] "
+            f"{case['question'][:50]:<50} -> EN q{case['mirrors']:<3} {detail}"
+        )
+
+    total = len(CROSS_LINGUAL)
+    print(f"\n  cross-lingual recall@{TOP_K}: {hits}/{total}  ({hits / total:.0%})")
+    return hits, total
+
+
 def run_refusal(chunks, vectors):
     print("\nREFUSAL  (calls the model, costs a few cents)\n")
     refused = 0
@@ -71,12 +95,20 @@ def main():
     print(f"index: {len(chunks)} chunks")
 
     hits, total = run_retrieval(chunks, vectors)
+    xl_hits, xl_total = run_cross_lingual(chunks, vectors)
 
     if with_generation:
         refused, refuse_total = run_refusal(chunks, vectors)
-        print(f"\nSUMMARY  recall {hits}/{total}  refusal {refused}/{refuse_total}\n")
+        print(
+            f"\nSUMMARY  recall {hits}/{total}  "
+            f"cross-lingual {xl_hits}/{xl_total}  "
+            f"refusal {refused}/{refuse_total}\n"
+        )
     else:
-        print("\n  (run with --full to also test refusals)\n")
+        print(
+            f"\nSUMMARY  recall {hits}/{total}  cross-lingual {xl_hits}/{xl_total}"
+            "   (--full also tests refusals)\n"
+        )
 
 
 if __name__ == "__main__":

@@ -61,6 +61,44 @@ ANSWERABLE = [
     },
 ]
 
+CROSS_LINGUAL = [
+    {
+        "id": "es-1",
+        "lang": "es",
+        "question": "¿Quién presenta la certificación laboral PERM, el trabajador o el empleador?",
+        "mirrors": 5,
+        "expect_source": "ETA-9089",
+    },
+    {
+        "id": "es-2",
+        "lang": "es",
+        "question": "¿Cuántas visas EB-3 hay disponibles cada año fiscal?",
+        "mirrors": 4,
+        "expect_source": "Chapter 7",
+    },
+    {
+        "id": "es-3",
+        "lang": "es",
+        "question": "¿Qué significa la Fecha de Acción Final en el Boletín de Visas?",
+        "mirrors": 7,
+        "expect_source": "Adjustment of Status Filing Charts",
+    },
+    {
+        "id": "es-4",
+        "lang": "es",
+        "question": "¿Cuáles son los requisitos de experiencia para la categoría de Trabajador Calificado EB-3?",
+        "mirrors": 1,
+        "expect_source": "Chapter 7",
+    },
+    {
+        "id": "pt-1",
+        "lang": "pt",
+        "question": "Quem apresenta a certificação de trabalho PERM, o trabalhador ou o empregador?",
+        "mirrors": 5,
+        "expect_source": "ETA-9089",
+    },
+]
+
 MUST_REFUSE = [
     {
         "id": 11,

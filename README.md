@@ -81,10 +81,18 @@ Every number below comes from `eval/run_eval.py` over the 15-question set.
 Two metrics, measured separately, because a bad answer has two possible causes:
 retrieval failed to find the text, or generation mishandled text it was given.
 
-| Configuration | Retrieval recall | Refusal rate |
-| --- | --- | --- |
-| `chunk 2000 / overlap 200 / top_k 5` | 8/10 (80%) | 5/5 (100%) |
-| `chunk 2000 / overlap 200 / top_k 8` | **10/10 (100%)** | 5/5 (100%) |
+| Configuration | Retrieval recall | Cross-lingual recall | Refusal rate |
+| --- | --- | --- | --- |
+| `chunk 2000 / overlap 200 / top_k 5` | 8/10 (80%) | — | 5/5 (100%) |
+| `chunk 2000 / overlap 200 / top_k 8` | **10/10 (100%)** | **4/5 (80%)** | 5/5 (100%) |
+
+Three metrics, measured separately:
+
+- **Retrieval recall** — did the document holding the answer make the top-k? English questions.
+- **Cross-lingual recall** — the same questions asked in Spanish and Portuguese against the
+  English-only corpus. Measures the multilingual claim instead of asserting it.
+- **Refusal rate** — did the system refuse what it must refuse? Two scope tests and two
+  legal-boundary tests.
 
 ### What the failures showed
 
@@ -113,6 +121,20 @@ more expensive prompt and more opportunity for the model to be distracted.
 
 The durable fix is a **reranker**, not a larger `top_k`. That is the next item on
 the roadmap, and the eval harness is what will prove whether it helps.
+
+### The cross-lingual gap is not uniform
+
+Spanish and Portuguese questions score 4/5 against the English 10/10 — but the
+interesting part is *which* question fails.
+
+`es-2` ("¿Cuántas visas EB-3 hay disponibles cada año fiscal?") mirrors English
+question 4 — the one that scraped in at rank 8 of 8. In Spanish it drops out of the
+top-8 entirely. `es-4` lands at rank 7 where its English twin sits at rank 2.
+
+**The language gap amplifies existing weakness rather than adding a flat penalty.**
+Retrieval that is already marginal in English fails outright in translation, which
+means fixing the weak English case fixes the Spanish case too — and that the
+reranker is worth more than it looked.
 
 ---
 
@@ -261,10 +283,15 @@ Download the corpus into `data/raw/` following [`data/SOURCES.md`](data/SOURCES.
 
 ```bash
 python build_index.py                     # once, and after any corpus or chunking change
-python ask.py "your question here"
-python -m eval.run_eval                   # retrieval only, free and instant
+python ask.py "your question here"        # CLI
+streamlit run app/streamlit_app.py        # web UI at localhost:8501
+python -m eval.run_eval                   # retrieval + cross-lingual, free and instant
 python -m eval.run_eval --full            # also tests refusals, calls the model
 ```
+
+The web UI shows the retrieved chunks and their similarity scores next to every
+answer, so when an answer looks wrong it is immediately visible whether retrieval
+or generation was at fault.
 
 Query embeddings are cached to `storage/query_cache.json`, so re-running the eval
 while tuning `TOP_K` costs nothing and returns immediately.
@@ -295,7 +322,7 @@ rather than claimed.
 
 **Quality**
 
-- [x] Evaluation harness — retrieval recall and refusal rate
+- [x] Evaluation harness — retrieval recall, cross-lingual recall, refusal rate
 - [ ] Chunking experiments — `overlap=0`, `chunk_size=1000`, measured
 - [ ] Corpus cleanup — strip watermarks, headers and navigation from extracted text
 - [ ] Citation fidelity metric — does every claim trace to a retrieved passage?
@@ -303,7 +330,18 @@ rather than claimed.
 **Interface**
 
 - [x] CLI
-- [ ] Streamlit — surface retrieved chunks and scores, so retrieval is visible
+- [x] Streamlit — retrieved chunks and scores shown beside every answer
+
+**Next: a Visa Bulletin calculator**
+
+A deterministic tool answering "which chart applies this month, and how far is my
+priority date from the cut-off" — arithmetic over published State Department data,
+with the RAG explaining what the numbers mean.
+
+The architectural rule that makes this safe: **the calculator never touches the
+language model, and the model never sees the user's dates.** Computing a published
+figure is not legal advice; conditioning a generated answer on someone's personal
+facts is. Wiring the two together would collapse the refusal architecture above.
 
 ---
 
