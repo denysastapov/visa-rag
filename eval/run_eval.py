@@ -1,6 +1,16 @@
+import json
 import sys
+from datetime import date
 
-from config import CHUNK_OVERLAP, CHUNK_SIZE, TOP_K
+from config import (
+    CHUNK_OVERLAP,
+    CHUNK_SIZE,
+    EVAL_RESULTS_PATH,
+    RERANK_ENABLED,
+    RERANK_MODEL,
+    STORAGE_DIR,
+    TOP_K,
+)
 from eval.questions import ANSWERABLE, CROSS_LINGUAL, MUST_REFUSE, REFUSAL_MARKERS
 from src.generate import answer
 from src.index import load_index
@@ -107,6 +117,11 @@ def run_refusal(chunks, vectors):
     return refused, total
 
 
+def save_results(payload):
+    STORAGE_DIR.mkdir(exist_ok=True)
+    EVAL_RESULTS_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
 def main():
     with_generation = "--full" in sys.argv
     chunks, vectors = load_index()
@@ -115,14 +130,28 @@ def main():
     hits, total = run_retrieval(chunks, vectors)
     xl_hits, xl_total = run_cross_lingual(chunks, vectors)
 
+    payload = {
+        "measured_on": date.today().isoformat(),
+        "chunks": len(chunks),
+        "top_k": TOP_K,
+        "chunk_size": CHUNK_SIZE,
+        "chunk_overlap": CHUNK_OVERLAP,
+        "reranker": RERANK_MODEL if RERANK_ENABLED else None,
+        "recall": f"{hits}/{total}",
+        "cross_lingual": f"{xl_hits}/{xl_total}",
+    }
+
     if with_generation:
         refused, refuse_total = run_refusal(chunks, vectors)
+        payload["refusal"] = f"{refused}/{refuse_total}"
+        save_results(payload)
         print(
             f"\nSUMMARY  recall {hits}/{total}  "
             f"cross-lingual {xl_hits}/{xl_total}  "
             f"refusal {refused}/{refuse_total}\n"
         )
     else:
+        save_results(payload)
         print(
             f"\nSUMMARY  recall {hits}/{total}  cross-lingual {xl_hits}/{xl_total}"
             "   (--full also tests refusals)\n"

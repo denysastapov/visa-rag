@@ -7,7 +7,8 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch \
+ && pip install --no-cache-dir -r requirements.txt
 
 COPY config.py build_index.py ask.py fetch_corpus.py ./
 COPY src/ ./src/
