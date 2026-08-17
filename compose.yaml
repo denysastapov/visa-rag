@@ -1,0 +1,50 @@
+services:
+  app:
+    build: .
+    image: visa-rag
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./storage:/app/storage
+    networks:
+      - default
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.visarag.rule=Host(`visa-rag.dev.test`)"
+      - "traefik.http.routers.visarag.entrypoints=websecure"
+      - "traefik.http.routers.visarag.tls=true"
+      - "traefik.http.services.visarag.loadbalancer.server.port=8501"
+    restart: unless-stopped
+
+  fetch:
+    build: .
+    image: visa-rag
+    volumes:
+      - ./data:/app/data
+    command: python fetch_corpus.py
+    profiles: ["tools"]
+
+  index:
+    build: .
+    image: visa-rag
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./storage:/app/storage
+    command: python build_index.py
+    profiles: ["tools"]
+
+  eval:
+    build: .
+    image: visa-rag
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./storage:/app/storage
+    command: python -m eval.run_eval
+    profiles: ["tools"]
+
+networks:
+  web:
+    external: true

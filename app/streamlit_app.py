@@ -6,9 +6,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import streamlit as st
 
 from config import CHAT_MODEL, CHUNK_OVERLAP, CHUNK_SIZE, EMBEDDING_MODEL, TOP_K
-from src.embeddings import embed_query
 from src.generate import answer
-from src.index import load_index, search
+from src.index import load_index
+from src.retrieval import retrieve
 
 EXAMPLES = [
     ("EN", "How many EB-3 visas are available each fiscal year?"),
@@ -37,34 +37,34 @@ def render_sources(results):
 def main():
     chunks, vectors = get_index()
 
+    sources = sorted({c["source"] for c in chunks})
+
     with st.sidebar:
-        st.subheader("Corpus")
-        sources = sorted({c["source"] for c in chunks})
-        st.metric("documents", len(sources))
-        st.metric("chunks indexed", len(chunks))
-
-        st.subheader("Configuration")
-        st.code(
-            f"chunk_size   {CHUNK_SIZE}\n"
-            f"overlap      {CHUNK_OVERLAP}\n"
-            f"top_k        {TOP_K}\n"
-            f"embeddings   {EMBEDDING_MODEL}\n"
-            f"generation   {CHAT_MODEL}",
-            language=None,
-        )
-
         st.subheader("Measured quality")
-        st.code(
-            "retrieval recall@8   10/10\n"
-            "cross-lingual        4/5\n"
-            "refusal rate         5/5",
-            language=None,
-        )
-        st.caption("`python -m eval.run_eval --full`")
+        st.caption("Scored against a fixed question set, not asserted.")
 
-        with st.expander("Documents in corpus"):
+        st.metric("Retrieval recall@8", "10 / 10", help="Did the document holding the answer make the top 8?")
+        st.metric("Cross-lingual recall", "4 / 5", help="Same questions in Spanish and Portuguese, against an English-only corpus")
+        st.metric("Refusal rate", "5 / 5", help="Out-of-scope questions, plus two that would be legal advice")
+
+        st.code("python -m eval.run_eval --full", language="bash")
+
+        st.divider()
+
+        with st.expander(f"Corpus · {len(sources)} documents"):
+            st.caption(f"{len(chunks)} chunks indexed")
             for name in sources:
-                st.caption(name)
+                st.caption(f"· {name}")
+
+        with st.expander("Pipeline settings"):
+            st.code(
+                f"chunk_size   {CHUNK_SIZE}\n"
+                f"overlap      {CHUNK_OVERLAP}\n"
+                f"top_k        {TOP_K}\n"
+                f"embeddings   {EMBEDDING_MODEL}\n"
+                f"generation   {CHAT_MODEL}",
+                language=None,
+            )
 
     st.title("visa-rag")
     st.caption(
@@ -98,7 +98,7 @@ def main():
         return
 
     with st.spinner("Searching the corpus"):
-        results = search(embed_query(question), chunks, vectors, TOP_K)
+        results = retrieve(question, chunks, vectors, TOP_K)
 
     left, right = st.columns([3, 2])
 

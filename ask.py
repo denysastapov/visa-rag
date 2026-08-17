@@ -1,9 +1,9 @@
 import sys
 
 from config import TOP_K
-from src.embeddings import embed_query
 from src.generate import answer
-from src.index import load_index, search
+from src.index import load_index
+from src.retrieval import retrieve
 
 
 def main() -> None:
@@ -12,8 +12,7 @@ def main() -> None:
         return
 
     chunks, vectors = load_index()
-    query_vector = embed_query(question)
-    results = search(query_vector, chunks, vectors, TOP_K)
+    results = retrieve(question, chunks, vectors, TOP_K)
 
     print("\nRetrieved:")
     for chunk, score in results:

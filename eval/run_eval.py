@@ -2,17 +2,24 @@ import sys
 
 from config import CHUNK_OVERLAP, CHUNK_SIZE, TOP_K
 from eval.questions import ANSWERABLE, CROSS_LINGUAL, MUST_REFUSE, REFUSAL_MARKERS
-from src.embeddings import embed_query
 from src.generate import answer
-from src.index import load_index, search
+from src.index import load_index
+from src.retrieval import retrieve
 
 OK = "PASS"
 BAD = "FAIL"
 
 
+def _label(expect_source):
+    if isinstance(expect_source, str):
+        return expect_source
+    return " | ".join(expect_source)
+
+
 def rank_of_expected(results, expect_source):
+    accepted = [expect_source] if isinstance(expect_source, str) else expect_source
     for position, (chunk, _score) in enumerate(results, start=1):
-        if expect_source.lower() in chunk["source"].lower():
+        if any(name.lower() in chunk["source"].lower() for name in accepted):
             return position
     return None
 
@@ -22,7 +29,7 @@ def run_retrieval(chunks, vectors):
     hits = 0
 
     for case in ANSWERABLE:
-        results = search(embed_query(case["question"]), chunks, vectors, TOP_K)
+        results = retrieve(case["question"], chunks, vectors, TOP_K)
         rank = rank_of_expected(results, case["expect_source"])
         top_score = results[0][1] if results else 0.0
 
@@ -34,7 +41,7 @@ def run_retrieval(chunks, vectors):
 
         print(
             f"  {verdict}  {case['id']:>2}  {case['question'][:52]:<52} "
-            f"{case['expect_source'][:26]:<26} {detail:<40} {top_score:.3f}"
+            f"{_label(case['expect_source'])[:26]:<26} {detail:<40} {top_score:.3f}"
         )
 
     total = len(ANSWERABLE)
@@ -47,7 +54,7 @@ def run_cross_lingual(chunks, vectors):
     hits = 0
 
     for case in CROSS_LINGUAL:
-        results = search(embed_query(case["question"]), chunks, vectors, TOP_K)
+        results = retrieve(case["question"], chunks, vectors, TOP_K)
         rank = rank_of_expected(results, case["expect_source"])
 
         if rank:
@@ -69,9 +76,11 @@ def run_cross_lingual(chunks, vectors):
 def run_refusal(chunks, vectors):
     print("\nREFUSAL  (calls the model, costs a few cents)\n")
     refused = 0
+    kinds: dict[str, int] = {}
+    totals: dict[str, int] = {}
 
     for case in MUST_REFUSE:
-        results = search(embed_query(case["question"]), chunks, vectors, TOP_K)
+        results = retrieve(case["question"], chunks, vectors, TOP_K)
         text = answer(case["question"], results).lower()
         did_refuse = any(marker in text for marker in REFUSAL_MARKERS)
 
@@ -81,11 +90,20 @@ def run_refusal(chunks, vectors):
         else:
             verdict, detail = BAD, "ANSWERED - should have refused"
 
-        print(f"  {verdict}  {case['id']:>2}  {case['question'][:52]:<52} {detail}")
-        print(f"           why: {case['why']}")
+        kinds[case["kind"]] = kinds.get(case["kind"], 0) + (1 if did_refuse else 0)
+        totals[case["kind"]] = totals.get(case["kind"], 0) + 1
+
+        print(
+            f"  {verdict}  {case['id']:>2}  [{case['kind']:<5}] "
+            f"{case['question'][:50]:<50} {detail}"
+        )
+        print(f"                    why: {case['why']}")
 
     total = len(MUST_REFUSE)
     print(f"\n  refusal rate: {refused}/{total}  ({refused / total:.0%})")
+    for kind in sorted(totals):
+        note = "fragile, valid only while the corpus is unchanged" if kind == "scope" else "permanent"
+        print(f"    {kind:<5} {kinds.get(kind, 0)}/{totals[kind]}   {note}")
     return refused, total
 
 

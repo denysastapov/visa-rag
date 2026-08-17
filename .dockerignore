@@ -1,0 +1,12 @@
+.venv/
+.git/
+.github/
+.vscode/
+__pycache__/
+**/__pycache__/
+*.pyc
+.env
+.DS_Store
+storage/
+data/raw/
+README.md

@@ -1,0 +1,74 @@
+[
+  {
+    "file": "uscis-what-is-a-us-visa.html",
+    "title": "What is a U.S. Visa? (immigrant vs nonimmigrant)",
+    "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/frequently-asked-questions/what-is-us-visa.html",
+    "tier": 1
+  },
+  {
+    "file": "uscis-directory-of-visa-categories.html",
+    "title": "Directory of Visa Categories",
+    "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/all-visa-categories.html",
+    "tier": 1
+  },
+  {
+    "file": "uscis-green-card-eligibility-categories.html",
+    "title": "Green Card Eligibility Categories",
+    "url": "https://www.uscis.gov/green-card/green-card-eligibility-categories",
+    "tier": 1
+  },
+  {
+    "file": "uscis-working-in-the-united-states.html",
+    "title": "Working in the United States",
+    "url": "https://www.uscis.gov/working-in-the-united-states",
+    "tier": 1
+  },
+  {
+    "file": "uscis-temporary-nonimmigrant-workers.html",
+    "title": "Temporary (Nonimmigrant) Workers",
+    "url": "https://www.uscis.gov/working-in-the-united-states/temporary-nonimmigrant-workers",
+    "tier": 1
+  },
+  {
+    "file": "uscis-green-card-processes-and-procedures.html",
+    "title": "Green Card Processes and Procedures",
+    "url": "https://www.uscis.gov/green-card/green-card-processes-and-procedures",
+    "tier": 1
+  },
+  {
+    "file": "uscis-adjustment-of-status.html",
+    "title": "Adjustment of Status",
+    "url": "https://www.uscis.gov/green-card/green-card-processes-and-procedures/adjustment-of-status",
+    "tier": 1
+  },
+  {
+    "file": "uscis-consular-processing.html",
+    "title": "Consular Processing",
+    "url": "https://www.uscis.gov/green-card/green-card-processes-and-procedures/consular-processing",
+    "tier": 1
+  },
+  {
+    "file": "uscis-h1b-specialty-occupations.html",
+    "title": "H-1B Specialty Occupations",
+    "url": "https://www.uscis.gov/working-in-the-united-states/h-1b-specialty-occupations",
+    "tier": 1
+  },
+  {
+    "file": "uscis-o1-extraordinary-ability.html",
+    "title": "O-1 Visa: Individuals with Extraordinary Ability or Achievement",
+    "url": "https://www.uscis.gov/working-in-the-united-states/temporary-workers/o-1-visa-individuals-with-extraordinary-ability-or-achievement",
+    "tier": 1
+  },
+  {
+    "file": "uscis-eb1-first-preference.html",
+    "title": "Employment-Based Immigration: First Preference EB-1",
+    "url": "https://www.uscis.gov/working-in-the-united-states/permanent-workers/employment-based-immigration-first-preference-eb-1",
+    "tier": 1
+  },
+  {
+    "file": "uscis-eb2-second-preference.html",
+    "title": "Employment-Based Immigration: Second Preference EB-2",
+    "url": "https://www.uscis.gov/working-in-the-united-states/permanent-workers/employment-based-immigration-second-preference-eb-2",
+    "tier": 1
+  }
+]
